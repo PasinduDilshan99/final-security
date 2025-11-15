@@ -8,9 +8,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Role {
     private Integer id;
-    private String username;
-    private String password;
-    private Set<Role> roles;
+    private String name;
+    private Set<Privilege> privileges;
 }
