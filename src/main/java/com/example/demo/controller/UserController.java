@@ -1,12 +1,17 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.LoginRequest;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping(path = "/api/v0/user")
@@ -25,8 +30,8 @@ public class UserController {
     }
 
     @PostMapping(path = "/login")
-    public String login(@RequestBody User user){
-       return userService.login(user);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
+       return ResponseEntity.ok(userService.login(loginRequest, response));
     }
 
 }
