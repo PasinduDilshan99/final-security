@@ -25,13 +25,19 @@ public class UserRepository {
     }
 
     public Optional<User> getUserByUsername(String username) {
-        String sql = "SELECT * FROM users WHERE username = ?";
+        String sql = "SELECT * FROM user WHERE username = ?";
 
         try {
             User user = jdbcTemplate.queryForObject(sql, new Object[]{username}, (rs, rowNum) -> User.builder()
-                    .id(rs.getInt("id"))
+                    .id(rs.getInt("user_id"))
                     .username(rs.getString("username"))
                     .password(rs.getString("password"))
+                    .firstName(rs.getString("first_name"))
+                    .middleName(rs.getString("middle_name"))
+                    .lastName(rs.getString("last_name"))
+                    .email(rs.getString("email"))
+                    .mobileNumber1(rs.getString("mobile_number1"))
+                    .mobileNumber2(rs.getString("mobile_number2"))
                     .build());
 
             if (user != null) {
@@ -49,10 +55,16 @@ public class UserRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(con -> {
             PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO users (username, password) VALUES (?, ?)",
+                    "INSERT INTO user (username, password, first_name, middle_name, last_name, email, mobile_number1, mobile_number2) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPassword());
+            ps.setString(3, user.getFirstName());
+            ps.setString(4, user.getMiddleName());
+            ps.setString(5, user.getLastName());
+            ps.setString(6, user.getEmail());
+            ps.setString(7, user.getMobileNumber1());
+            ps.setString(8, user.getMobileNumber2());
             return ps;
         }, keyHolder);
         if (keyHolder.getKey() != null) {

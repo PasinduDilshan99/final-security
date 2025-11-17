@@ -16,6 +16,12 @@ public class User {
     private Integer id;
     private String username;
     private String password;
+    private String firstName;
+    private String middleName;
+    private String lastName;
+    private String email;
+    private String mobileNumber1;
+    private String mobileNumber2;
     @Builder.Default
     private Set<String> roles = new HashSet<>();
     @Builder.Default
