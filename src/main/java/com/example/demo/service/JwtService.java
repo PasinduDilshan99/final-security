@@ -30,10 +30,10 @@ public class JwtService {
     private String secretKey;
 
     @Value("${jwt.expiration.time:600000}")
-    private long jwtExpirationMillis;
+    private String jwtExpirationMillisRaw;
 
     @Value("${jwt.refresh.expiration.time:900000}")
-    private long refreshJwtExpirationMillis;
+    private String refreshJwtExpirationMillisRaw;
 
     @Value("${jwt.cookie.name:auth-token}")
     private String accessCookieName;
@@ -42,10 +42,23 @@ public class JwtService {
     private String refreshCookieName;
 
     @Value("${jwt.cookie.max-age:600}")
-    private long accessCookieMaxAge;
+    private String accessCookieMaxAgeRaw;
 
     @Value("${jwt.refresh.cookie.max-age:900}")
+    private String refreshCookieMaxAgeRaw;
+
+    private long jwtExpirationMillis;
+    private long refreshJwtExpirationMillis;
+    private long accessCookieMaxAge;
     private long refreshCookieMaxAge;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.jwtExpirationMillis = parseLongSafely(jwtExpirationMillisRaw, 600_000L);
+        this.refreshJwtExpirationMillis = parseLongSafely(refreshJwtExpirationMillisRaw, 900_000L);
+        this.accessCookieMaxAge = parseLongSafely(accessCookieMaxAgeRaw, 600L);
+        this.refreshCookieMaxAge = parseLongSafely(refreshCookieMaxAgeRaw, 900L);
+    }
 
     public String generateAccessToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -170,5 +183,20 @@ public class JwtService {
 
     public Instant getRefreshExpiryInstant() {
         return Instant.now().plusMillis(refreshJwtExpirationMillis);
+    }
+
+    private long parseLongSafely(String value, long defaultValue) {
+        if (!StringUtils.hasText(value)) {
+            return defaultValue;
+        }
+        String digitsOnly = value.replaceAll("[^0-9]", "");
+        if (!StringUtils.hasText(digitsOnly)) {
+            return defaultValue;
+        }
+        try {
+            return Long.parseLong(digitsOnly);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 }
