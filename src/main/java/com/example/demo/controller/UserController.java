@@ -4,6 +4,7 @@ import com.example.demo.dto.AuthResponse;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,8 +30,8 @@ public class UserController {
     }
 
     @PostMapping(path = "/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
-       return ResponseEntity.ok(userService.login(loginRequest));
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
+       return ResponseEntity.ok(userService.login(loginRequest, response));
     }
 
     @GetMapping(path = "/me")

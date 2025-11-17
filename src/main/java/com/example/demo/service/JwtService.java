@@ -9,11 +9,13 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,6 +34,18 @@ public class JwtService {
 
     @Value("${jwt.refresh.expiration.time:900000}")
     private long refreshJwtExpirationMillis;
+
+    @Value("${jwt.cookie.name:auth-token}")
+    private String accessCookieName;
+
+    @Value("${jwt.refresh.cookie.name:refresh-token}")
+    private String refreshCookieName;
+
+    @Value("${jwt.cookie.max-age:600}")
+    private long accessCookieMaxAge;
+
+    @Value("${jwt.refresh.cookie.max-age:900}")
+    private long refreshCookieMaxAge;
 
     public String generateAccessToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -97,24 +111,37 @@ public class JwtService {
     public boolean isRefreshToken(String token) {
         return "refresh".equals(extractClaim(token, claims -> claims.getOrDefault("type", "").toString()));
     }
+
+    public ResponseCookie buildAccessTokenCookie(String token) {
+        return ResponseCookie.from(accessCookieName, token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(Duration.ofSeconds(accessCookieMaxAge))
+                .sameSite("Strict")
+                .build();
+    }
+
+    public ResponseCookie buildRefreshTokenCookie(String token) {
+        return ResponseCookie.from(refreshCookieName, token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(Duration.ofSeconds(refreshCookieMaxAge))
+                .sameSite("Strict")
+                .build();
+    }
+
     public Optional<String> resolveAccessToken(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
             return Optional.of(header.substring(7));
         }
-        return Optional.empty();
+        return getCookieValue(request, accessCookieName);
     }
 
     public Optional<String> resolveRefreshToken(HttpServletRequest request) {
-        String header = request.getHeader("X-Refresh-Token");
-        if (StringUtils.hasText(header)) {
-            return Optional.of(header.trim());
-        }
-        String altHeader = request.getHeader("Refresh-Token");
-        if (StringUtils.hasText(altHeader)) {
-            return Optional.of(altHeader.trim());
-        }
-        return Optional.empty();
+        return getCookieValue(request, refreshCookieName);
     }
 
     public boolean canRefresh(String refreshToken, CustomUserDetails userDetails) {
@@ -129,5 +156,17 @@ public class JwtService {
 
     public Instant getRefreshExpiryInstant() {
         return Instant.now().plusMillis(refreshJwtExpirationMillis);
+    }
+
+    private Optional<String> getCookieValue(HttpServletRequest request, String name) {
+        if (request.getCookies() == null) {
+            return Optional.empty();
+        }
+        for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+            if (name.equals(cookie.getName())) {
+                return Optional.ofNullable(cookie.getValue());
+            }
+        }
+        return Optional.empty();
     }
 }

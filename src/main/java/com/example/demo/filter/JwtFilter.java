@@ -74,7 +74,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
         String newAccessToken = jwtService.generateAccessToken(userDetails.getDomainUser());
-        response.addHeader("X-New-Access-Token", newAccessToken);
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, jwtService.buildAccessTokenCookie(newAccessToken).toString());
         setAuthentication(userDetails, request);
     }
 

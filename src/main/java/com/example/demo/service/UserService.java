@@ -14,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class UserService {
@@ -39,7 +42,7 @@ public class UserService {
         return userRepository.signup(user);
     }
 
-    public AuthResponse login(LoginRequest loginRequest) {
+    public AuthResponse login(LoginRequest loginRequest, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
         if (authentication.isAuthenticated()) {
@@ -48,6 +51,11 @@ public class UserService {
             String accessToken = jwtService.generateAccessToken(domainUser);
             String refreshToken = jwtService.generateRefreshToken(domainUser);
             refreshTokenService.createRefreshToken(domainUser, refreshToken, jwtService.extractExpiration(refreshToken).toInstant());
+
+            ResponseCookie accessCookie = jwtService.buildAccessTokenCookie(accessToken);
+            ResponseCookie refreshCookie = jwtService.buildRefreshTokenCookie(refreshToken);
+            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
             return AuthResponse.builder()
                     .message("Login successful")
