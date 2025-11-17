@@ -5,7 +5,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -17,7 +18,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("USER"));
+        return user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -32,25 +35,25 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-//        return UserDetails.super.isAccountNonExpired();
         return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-//        return UserDetails.super.isAccountNonLocked();
         return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
-//        return UserDetails.super.isCredentialsNonExpired();
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
-//        return UserDetails.super.isEnabled();
+        return user.isEnabled();
+    }
+
+    public User getUser() {
+        return user;
     }
 }

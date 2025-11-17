@@ -1,83 +1,56 @@
-USE final_security;
+-- Create database
+CREATE DATABASE security_demo;
+USE security_demo;
 
--- Create roles table
+-- Users table
+CREATE TABLE users (
+                       id INT AUTO_INCREMENT PRIMARY KEY,
+                       username VARCHAR(50) UNIQUE NOT NULL,
+                       password VARCHAR(255) NOT NULL,
+                       enabled BOOLEAN DEFAULT TRUE,
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Roles table
 CREATE TABLE roles (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL UNIQUE
+                       id INT AUTO_INCREMENT PRIMARY KEY,
+                       name VARCHAR(50) UNIQUE NOT NULL
 );
 
--- Create privileges table
-CREATE TABLE privileges (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL UNIQUE
-);
-
--- Create role_privileges junction table
-CREATE TABLE role_privileges (
-    role_id INT,
-    privilege_id INT,
-    PRIMARY KEY (role_id, privilege_id),
-    FOREIGN KEY (role_id) REFERENCES roles(id),
-    FOREIGN KEY (privilege_id) REFERENCES privileges(id)
-);
-
--- Create user_roles table
+-- User roles junction table
 CREATE TABLE user_roles (
-    user_id INT,
-    role_id INT,
-    PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (role_id) REFERENCES roles(id)
+                            user_id INT,
+                            role_id INT,
+                            PRIMARY KEY (user_id, role_id),
+                            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                            FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
--- Create refresh_tokens table
+-- Refresh tokens table
 CREATE TABLE refresh_tokens (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    token VARCHAR(500) NOT NULL UNIQUE,
-    expiry_date TIMESTAMP NOT NULL,
-    revoked BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                user_id INT NOT NULL,
+                                token VARCHAR(255) UNIQUE NOT NULL,
+                                expiry_date TIMESTAMP NOT NULL,
+                                revoked BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Insert default roles
-INSERT INTO roles (id, name) VALUES 
-(1, 'ROLE_USER'),
-(2, 'ROLE_ADMIN'),
-(3, 'ROLE_MODERATOR');
+INSERT INTO roles (name) VALUES ('ROLE_USER'), ('ROLE_ADMIN'), ('ROLE_MODERATOR');
 
--- Insert default privileges
-INSERT INTO privileges (id, name) VALUES 
-(1, 'READ_PRIVILEGE'),
-(2, 'WRITE_PRIVILEGE'),
-(3, 'DELETE_PRIVILEGE'),
-(4, 'USER_MANAGEMENT'),
-(5, 'ADMIN_ACCESS');
+-- Insert sample users (passwords will be encoded in application)
+INSERT INTO users (username, password) VALUES
+                                           ('user', '$2a$12$someEncodedPasswordHere'),
+                                           ('admin', '$2a$12$someEncodedPasswordHere');
 
--- Assign privileges to roles
-INSERT INTO role_privileges (role_id, privilege_id) VALUES 
-(1, 1), -- USER can READ
-(2, 1), -- ADMIN can READ
-(2, 2), -- ADMIN can WRITE
-(2, 3), -- ADMIN can DELETE
-(2, 4), -- ADMIN can manage users
-(2, 5), -- ADMIN has admin access
-(3, 1), -- MODERATOR can READ
-(3, 2), -- MODERATOR can WRITE
-(3, 4); -- MODERATOR can manage users
+-- Assign roles
+INSERT INTO user_roles (user_id, role_id) VALUES
+                                              (1, 1), -- user has ROLE_USER
+                                              (2, 2); -- admin has ROLE_ADMIN
 
--- Update users table structure if needed
-ALTER TABLE users MODIFY COLUMN id INT AUTO_INCREMENT;
-
--- Insert sample users with encoded passwords
--- Password for all users: 'password'
-INSERT INTO users (username, password) VALUES 
-('user@example.com', '$2a$12$K1gG.8bwI8C1Q8Q1Q1Q1QO.1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q'),
-('admin@example.com', '$2a$12$K1gG.8bwI8C1Q8Q1Q1Q1QO.1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q'),
-('moderator@example.com', '$2a$12$K1gG.8bwI8C1Q8Q1Q1Q1QO.1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q');
-
--- Assign roles to users
-INSERT INTO user_roles (user_id, role_id) VALUES 
-(1, 1), -- user has ROLE_USER
-(2, 2), -- admin has ROLE_ADMIN
-(3, 3); -- moderator has ROLE_MODERATOR
+-- Create index for better performance
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_users_username ON users(username);
