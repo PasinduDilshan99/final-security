@@ -60,8 +60,6 @@ public class UserService {
             return AuthResponse.builder()
                     .message("Login successful")
                     .username(domainUser.getUsername())
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
                     .accessTokenExpiresAt(jwtService.extractExpiration(accessToken).toInstant())
                     .refreshTokenExpiresAt(jwtService.extractExpiration(refreshToken).toInstant())
                     .build();
