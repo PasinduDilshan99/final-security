@@ -11,6 +11,8 @@ import java.util.Set;
 public class AuthResponse {
     private String message;
     private String username;
+    private String accessToken; // included only for dev profile
+    private String refreshToken; // included only for dev profile
     private Instant accessTokenExpiresAt;
     private Instant refreshTokenExpiresAt;
 }

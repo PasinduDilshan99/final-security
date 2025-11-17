@@ -6,6 +6,7 @@ import com.example.demo.model.CustomUserDetails;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,16 +26,18 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtService  jwtService ;
     private final RefreshTokenService refreshTokenService;
+    private final Environment environment;
 
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
     @Autowired
     public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, JwtService jwtService,
-                       RefreshTokenService refreshTokenService) {
+                       RefreshTokenService refreshTokenService, Environment environment) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.environment = environment;
     }
 
     public User signup(User user) {
@@ -57,9 +60,14 @@ public class UserService {
             response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
             response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
+            boolean isDev = java.util.Arrays.asList(environment.getActiveProfiles()).stream()
+                    .anyMatch(p -> "dev".equalsIgnoreCase(p));
+
             return AuthResponse.builder()
                     .message("Login successful")
                     .username(domainUser.getUsername())
+                    .accessToken(isDev ? accessToken : null)
+                    .refreshToken(isDev ? refreshToken : null)
                     .accessTokenExpiresAt(jwtService.extractExpiration(accessToken).toInstant())
                     .refreshTokenExpiresAt(jwtService.extractExpiration(refreshToken).toInstant())
                     .build();
