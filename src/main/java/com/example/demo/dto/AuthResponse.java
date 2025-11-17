@@ -11,8 +11,8 @@ import java.util.Set;
 public class AuthResponse {
     private String message;
     private String username;
-    private Set<String> roles;
-    private Set<String> privileges;
+    private String accessToken;
+    private String refreshToken;
     private Instant accessTokenExpiresAt;
     private Instant refreshTokenExpiresAt;
 }
