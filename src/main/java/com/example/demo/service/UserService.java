@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.AuthResponse;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.model.CustomUserDetails;
+import com.example.demo.model.RefreshToken;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
